@@ -26,9 +26,9 @@ def sample():
     input_att_unpair.copy_(batch_att)
 
 def loss_fn(recon_x, x, mean, log_var):
-    BCE = torch.nn.functional.binary_cross_entropy(recon_x+1e-12, x.detach(),size_average=False)
+    BCE = ops.binary_cross_entropy(recon_x+1e-12, x.detach(),size_average=False)
     BCE = BCE.sum()/ x.size(0)
-    KLD = -0.5 * torch.sum(1 + log_var - mean.pow(2) - log_var.exp())/ x.size(0)
+    KLD = -0.5 * ops.sum(1 + log_var - mean.pow(2) - log_var.exp())/ x.size(0)
     return (BCE + KLD)
 
 def WeightedL1(pred, gt):
@@ -38,7 +38,7 @@ def WeightedL1(pred, gt):
     return loss.sum()/loss.size(0)
 
 def calc_gradient_penalty(netD, real_data, fake_data, input_att):
-    alpha = torch.rand(opt.batch_size, 1)
+    alpha = ops.rand(opt.batch_size, 1)
     alpha = alpha.expand(real_data.size())
     if opt.cuda:
         alpha = alpha.cuda()
@@ -50,7 +50,7 @@ def calc_gradient_penalty(netD, real_data, fake_data, input_att):
     interpolates = Variable(interpolates, requires_grad=True)
     
     disc_interpolates = netD(interpolates, Variable(input_att))
-    ones = torch.ones(disc_interpolates.size())
+    ones = ops.ones(disc_interpolates.size())
     if opt.cuda:
         ones = ones.cuda()
     gradients = autograd.grad(outputs=disc_interpolates, inputs=(interpolates),
@@ -60,7 +60,7 @@ def calc_gradient_penalty(netD, real_data, fake_data, input_att):
     return gradient_penalty
 
 def calc_gradient_penalty2(netD, real_data, fake_data, real_hidden, fake_hidden):
-    alpha = torch.rand(opt.batch_size, 1)
+    alpha = ops.rand(opt.batch_size, 1)
     alpha1 = alpha.expand(real_data.size())
     if opt.cuda:
         alpha1 = alpha1.cuda()
@@ -79,14 +79,14 @@ def calc_gradient_penalty2(netD, real_data, fake_data, real_hidden, fake_hidden)
     interpolates_hidden.requires_grad_(True)
     disc_interpolates = netD(interpolates, interpolates_hidden)
 
-    ones = torch.ones(disc_interpolates.size())
+    ones = ops.ones(disc_interpolates.size())
     if opt.cuda:
         ones = ones.cuda()
 
     gradients = autograd.grad(outputs=disc_interpolates, inputs=(interpolates, interpolates_hidden),
                               grad_outputs=ones,
                               create_graph=True, retain_graph=True, only_inputs=True)#[0]
-    gradients = torch.cat((gradients[0], gradients[1]), dim=1)
+    gradients = ops.cat((gradients[0], gradients[1]), dim=1)
     gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * opt.lambda1
     return gradient_penalty
 
@@ -143,8 +143,7 @@ for epoch in range(0, opt.nepoch):
                 
                 
                 
-                with torch.no_grad():
-                    input_fake_att_unpairv = (netDec(input_res_unpairv)) 
+                input_fake_att_unpairv = (netDec(input_res_unpairv)) 
                 
                 # Train the Decoder.
                 
@@ -169,13 +168,13 @@ for epoch in range(0, opt.nepoch):
 
                     if opt.encoded_noise:  
                         means, log_var = netE(input_resv, input_attv)
-                        std = torch.exp(0.5 * log_var)
-                        eps = torch.randn([opt.batch_size, opt.latent_size]).cpu()
+                        std = ops.exp(0.5 * log_var)
+                        eps = ops.randn([opt.batch_size, opt.latent_size]).cpu()
                         if opt.cuda:
                             eps = Variable(eps.cuda())
                         else:
                             eps = Variable(eps)
-                        z = eps * std + means #torch.Size([64, 312])
+                        z = eps * std + means 
                     else:
                         noise.normal_(0, 1)
                         z = Variable(noise)                    
@@ -263,20 +262,19 @@ for epoch in range(0, opt.nepoch):
             input_res_unpairv = (input_res_unpair)
             input_att_unpairv = (input_att_unpair)
             
-            with torch.no_grad():
-                input_fake_att_unpairv = (netDec(input_res_unpairv))
+            input_fake_att_unpairv = (netDec(input_res_unpairv))
     
             # seen class
             def forward_fn_3():
                 pass
                 means, log_var = netE(input_resv, input_attv)
-                std = torch.exp(0.5 * log_var)
-                eps = torch.randn([opt.batch_size, opt.latent_size]).cpu()
+                std = ops.exp(0.5 * log_var)
+                eps = ops.randn([opt.batch_size, opt.latent_size]).cpu()
                 if opt.cuda:
                     eps = Variable(eps.cuda())
                 else:
                     eps = Variable(eps)
-                z = eps * std + means #torch.Size([64, 312])
+                z = eps * std + means
 
                 if loop == 1:
                     recon_x = netG(z, c=input_attv)
