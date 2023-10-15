@@ -126,7 +126,7 @@ for epoch in range(0, opt.nepoch):
             for p in netD2.trainable_params(): #unfreeze discriminator2
                 p.requires_grad = True 
 
-            for p in netDec.trainable_params(): #unfreeze deocder
+            for p in netDec.trainable_params(): #unfreeze decoder
                 p.requires_grad = True                
                 
             # Train D1, D2 and Decoder (and Decoder Discriminator)
@@ -245,9 +245,9 @@ for epoch in range(0, opt.nepoch):
 
             #############Generator training ##############
             # Train Generator and Decoder
-            for p in netD.trainable_params(): #freeze discrimator
+            for p in netD.trainable_params(): #freeze discriminator
                 p.requires_grad = False
-            for p in netD2.trainable_params(): #freeze discrimator
+            for p in netD2.trainable_params(): #freeze discriminator2
                 p.requires_grad = False 
             if opt.recons_weight > 0 and opt.freeze_dec:
                 for p in netDec.trainable_params(): #freeze decoder
